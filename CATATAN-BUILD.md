@@ -23,8 +23,9 @@ JVM tidak bisa akses jaringan di sandbox).
    terkunci — tanpa model terkunci, otak menolak dengan pesan jelas.
 2. **Tanpa data bawaan.** Install pertama = kosong total: jadwal
    (4 jadwal contoh dihapus), skill/pelajaran/memori contoh dihapus,
-   tanpa model default, tanpa alamat API default. Riwayat Aksi +
-   Laporan Harian memang sudah kosong (hanya dari aksi nyata).
+   pesan sambutan di Chat Utama dihapus, tanpa model default, tanpa
+   alamat API default. Riwayat Aksi + Laporan Harian memang sudah
+   kosong (hanya dari aksi nyata).
 3. **Bukan getgua client.** Server HTTP kendali jarak jauh, token HTTP
    (termasuk baca file config Termux), input token manual, dan tombol
    MULAI/HENTIKAN SERVICE DIHAPUS TOTAL (ketiga berkas server/token

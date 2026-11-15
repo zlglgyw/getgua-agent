@@ -100,18 +100,11 @@ object ChatStore {
         return true
     }
 
-    private fun emptyMain(): Thread = Thread(
-        MAIN_ID,
-        "Chat Utama",
-        false,
-        listOf(
-            Message(
-                "agent",
-                "Halo Pak! Saya agen getgua. Perintah apa yang bisa saya kerjakan? Contoh: \"buka Chrome, cari muse ai\".",
-                SimpleDateFormat("HH:mm", Locale.US).format(Date()),
-            ),
-        ),
-    )
+    /**
+     * Thread Chat Utama KOSONG (v1.0.1: tanpa pesan sambutan bawaan —
+     * install pertama = kosong total, Pak 15 Nov 14:51 WIB).
+     */
+    private fun emptyMain(): Thread = Thread(MAIN_ID, "Chat Utama", false, emptyList())
 
     private fun ensureMain() {
         val all = threads()
