@@ -49,6 +49,15 @@ object AgentLoop {
 
     @Volatile var listener: Listener? = null
 
+    /**
+     * Saluran balasan tugas yang sedang berjalan (v1.0.2) — dipakai
+     * bot Telegram untuk meneruskan jawaban loop ke pengirim.
+     * Hanya diset saat tugas benar-benar diluncurkan (di dalam
+     * start() sesudah cek `running`), dan dibersihkan di finally
+     * SEBELUM running=false supaya tidak menimpa tugas berikutnya.
+     */
+    @Volatile private var currentReplySink: ((String) -> Unit)? = null
+
     @Volatile private var stopRequested = false
     @Volatile private var confirmDecision: Boolean? = null
     private var screenW = 720
@@ -63,18 +72,38 @@ object AgentLoop {
         }
     }
 
-    /** Mulai tugas baru. False bila agen sedang sibuk. */
+    /**
+     * Mulai tugas baru. False bila agen sedang sibuk.
+     * [onReply] (opsional) dipanggil untuk tiap pesan agen — dipakai
+     * bot Telegram untuk membalas ke pengirim.
+     */
     @Synchronized
-    fun start(threadId: String, command: String): Boolean {
+    fun start(threadId: String, command: String, onReply: ((String) -> Unit)? = null): Boolean {
+        // Perintah "hubungkan ke telegram" (v1.0.2): jawab langsung
+        // dengan STATUS Telegram + panduan — JANGAN coba-coba ketuk
+        // layar. Berlaku walau agen sibuk / otak belum diatur.
+        if (isTelegramConnectCommand(command)) {
+            replyDirect(threadId, TelegramBot.statusText(), onReply)
+            return false
+        }
         if (running) return false
         if (!Prefs.hasBrainConfig()) {
-            postToChat(threadId, "agent", "Otak belum diatur, Pak. Isi dulu Custom API Key di menu Status (alamat + kunci API), lalu coba lagi.")
+            replyDirect(
+                threadId,
+                "Otak belum diatur, Pak. Isi dulu Custom API Key di menu Status (alamat + kunci API), lalu coba lagi.",
+                onReply,
+            )
             return false
         }
         if (!Prefs.hasModel()) {
-            postToChat(threadId, "agent", "Model belum dipilih, Pak. Buka menu Status, ketuk Tes Otak, lalu ketuk salah satu model untuk menguncinya — atau ketik ID model di Pengaturan.")
+            replyDirect(
+                threadId,
+                "Model belum dipilih, Pak. Buka menu Status, ketuk Tes Otak, lalu ketuk salah satu model untuk menguncinya — atau ketik ID model di Pengaturan.",
+                onReply,
+            )
             return false
         }
+        currentReplySink = onReply
         running = true
         stopRequested = false
         confirmDecision = null
@@ -88,6 +117,9 @@ object AgentLoop {
                 postToChat(threadId, "agent", "Terjadi kesalahan di loop agen: ${(e.message ?: "").take(150)}")
                 ActionLog.log(command.take(60), ActionLog.FAIL, "loop exception")
             } finally {
+                // Sink dibersihkan DULU, baru running=false — supaya
+                // tugas berikutnya tidak kehilangan sink-nya.
+                currentReplySink = null
                 running = false
                 currentTask = null
                 pendingConfirmation = null
@@ -99,6 +131,26 @@ object AgentLoop {
             }
         }
         return true
+    }
+
+    /** Perintah yang meminta menghubungkan Telegram (bukan tugas layar). */
+    private fun isTelegramConnectCommand(command: String): Boolean {
+        val lower = command.lowercase()
+        if ("telegram" !in lower) return false
+        return listOf("hubung", "connect", "sambung", "pasang", "atur", "setting", "status").any { it in lower }
+    }
+
+    /**
+     * Balas langsung tanpa menjalankan loop: tulis ke ChatStore +
+     * listener + saluran onReply (bila ada). Dipakai jawaban instan
+     * (status Telegram, otak belum diatur, model belum dipilih).
+     */
+    private fun replyDirect(threadId: String, text: String, onReply: ((String) -> Unit)?) {
+        postToChatLocal(threadId, "agent", text)
+        try {
+            onReply?.invoke(text)
+        } catch (_: Exception) {
+        }
     }
 
     /** Hentikan tugas yang sedang berjalan (tombol HENTIKAN AGEN). */
@@ -123,7 +175,17 @@ object AgentLoop {
         }
     }
 
+    /** Pesan agen: ke ChatStore + listener + saluran balasan (bila ada). */
     private fun postToChat(threadId: String, from: String, text: String) {
+        postToChatLocal(threadId, from, text)
+        try {
+            currentReplySink?.invoke(text)
+        } catch (_: Exception) {
+        }
+    }
+
+    /** Pesan agen: ke ChatStore + listener saja (tanpa saluran balasan). */
+    private fun postToChatLocal(threadId: String, from: String, text: String) {
         try {
             ChatStore.addMessage(threadId, from, text)
         } catch (_: Exception) {
@@ -244,7 +306,10 @@ object AgentLoop {
                     postToChat(
                         threadId,
                         "agent",
-                        "Saya sudah mencoba $MAX_RETRIES_PER_STEP kali tapi langkah ini tetap gagal ($toolName — ${outcome.info}). Tugas dihentikan, Pak. Coba periksa layarnya, lalu perintahkan lagi.",
+                        // v1.0.2: sertakan DETAIL kegagalan (bukan hanya
+                        // kode info) supaya Pak tahu apa yang harus
+                        // diperbaiki — mis. izin root/Aksesibilitas.
+                        "Saya sudah mencoba $MAX_RETRIES_PER_STEP kali tapi langkah ini tetap gagal ($toolName): ${outcome.detail.take(200)} Tugas dihentikan, Pak.",
                     )
                     ActionLog.log(command.take(60), ActionLog.FAIL, "3x gagal di $toolName")
                     return
@@ -358,6 +423,7 @@ object AgentLoop {
         sb.append("5. Kalau tugas selesai, panggil tool done dengan pesan hasil akhirnya.\n")
         sb.append("6. Kalau perintah tidak jelas, selesaikan dengan done berisi pertanyaanmu — jangan menebak aksi berisiko.\n")
         sb.append("7. Kamu BISA menulis/membuat sendiri tanpa menyentuh layar: create_schedule untuk membuat jadwal (jadwal bebas — tulis interval apa adanya seperti yang Pak minta, mis. \"45 menit\" / \"3 jam\" / \"07:05\"), list_schedules untuk melihat jadwal yang ada, add_memory untuk mencatat. Kalau Pak minta dibuatkan jadwal/catatan, langsung pakai tool-nya — jangan buka layar lalu ketuk-ketuk form.\n")
+        sb.append("8. Kalau layar tidak bisa dibaca atau aksi gagal karena IZIN (layanan Aksesibilitas belum aktif / izin root belum diberikan), JANGAN coba-coba aksi layar berulang-ulang — selesaikan dengan done berisi apa yang harus Pak aktifkan/berikan dulu.\n")
         if (lessons.isNotEmpty()) {
             sb.append("\nPelajaran dari koreksi Pak (wajib dipakai):\n")
             for (l in lessons) sb.append("- ").append(l.text).append("\n")

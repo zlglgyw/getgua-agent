@@ -95,9 +95,15 @@ object AgentTools {
      * Jalankan satu tool. "done" tidak dieksekusi di sini (ditangani loop).
      * [allowRisky] hanya true sesudah Pak mengonfirmasi satu aksi berisiko.
      */
+    /** Tool yang menyentuh layar — kegagalannya dicek izinnya (v1.0.2). */
+    private val SCREEN_TOOLS = setOf(
+        "tap", "tap_text", "tap_resource", "swipe", "scroll",
+        "long_press", "double_tap", "type", "key", "launch",
+    )
+
     fun execute(name: String, args: JSONObject, allowRisky: Boolean = false): ToolOutcome {
         return try {
-            when (name) {
+            val outcome: ToolOutcome = when (name) {
                 "tap" -> {
                     val r = Automation.tap(args.optInt("x"), args.optInt("y"))
                     ToolOutcome(r.ok, r.info, "tap (${args.optInt("x")},${args.optInt("y")}) via ${r.method}", r.uiChanged)
@@ -148,7 +154,17 @@ object AgentTools {
                 "screenshot" -> {
                     val png = Screenshot.capturePng()
                     if (png == null) {
-                        ToolOutcome(false, "screenshot_failed", "Screenshot gagal diambil", null)
+                        val problem = try {
+                            Automation.permissionProblem()
+                        } catch (_: Exception) {
+                            null
+                        }
+                        val detail = if (problem != null) {
+                            "Screenshot gagal diambil: $problem"
+                        } else {
+                            "Screenshot gagal diambil (mungkin layar aplikasi ini dilindungi — FLAG_SECURE)"
+                        }
+                        ToolOutcome(false, "screenshot_failed", detail, null)
                     } else {
                         ToolOutcome(true, "screenshot", "Screenshot diambil (${png.size} byte).", null)
                     }
@@ -184,9 +200,40 @@ object AgentTools {
                 }
                 else -> ToolOutcome(false, "unknown_tool", "Tool tidak dikenal: $name", null)
             }
+            // v1.0.2: bila aksi layar gagal / layar tak berubah,
+            // sertakan diagnosis izin di detailnya.
+            if (name in SCREEN_TOOLS) withPermissionHint(outcome) else outcome
         } catch (e: Exception) {
-            ToolOutcome(false, "exception", "Gagal menjalankan $name: ${(e.message ?: "").take(120)}", null)
+            val problem = try {
+                Automation.permissionProblem()
+            } catch (_: Exception) {
+                null
+            }
+            val detail = "Gagal menjalankan $name: ${(e.message ?: e.javaClass.simpleName).take(120)}" +
+                if (problem != null) " — kemungkinan penyebab: $problem" else ""
+            ToolOutcome(false, "exception", detail, null)
         }
+    }
+
+    /**
+     * Bila aksi gagal (atau layar tidak berubah padahal seharusnya),
+     * dan ada masalah izin (root/Aksesibilitas), sertakan pesan izin
+     * yang jelas di detail + tandai info "no_permission". Perilaku
+     * sukses tidak berubah.
+     */
+    private fun withPermissionHint(outcome: ToolOutcome): ToolOutcome {
+        if (outcome.ok && outcome.uiChanged != false) return outcome
+        // blocked_risky punya jalurnya sendiri (konfirmasi Pak).
+        if (outcome.info == "blocked_risky") return outcome
+        val problem = try {
+            Automation.permissionProblem()
+        } catch (_: Exception) {
+            null
+        } ?: return outcome
+        return outcome.copy(
+            info = "no_permission",
+            detail = "${outcome.detail} — GAGAL karena $problem.",
+        )
     }
 
     /**
@@ -199,7 +246,20 @@ object AgentTools {
         } catch (_: Exception) {
             return "(tidak bisa membaca layar)"
         }
-        if (nodes.isEmpty()) return "(layar kosong / tidak bisa dibaca — sumber: $source)"
+        if (nodes.isEmpty()) {
+            // v1.0.2: layar tak terbaca — sebutkan penyebab izinnya
+            // (bila ada) supaya otak langsung melaporkannya ke Pak.
+            val problem = try {
+                Automation.permissionProblem()
+            } catch (_: Exception) {
+                null
+            }
+            return if (problem != null) {
+                "(layar tidak bisa dibaca: $problem)"
+            } else {
+                "(layar kosong / tidak bisa dibaca — sumber: $source)"
+            }
+        }
         val sb = StringBuilder()
         sb.append("(sumber: ").append(source).append(", ").append(nodes.size).append(" elemen)\n")
         var shown = 0

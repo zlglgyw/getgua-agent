@@ -1,4 +1,4 @@
-# Agen getgua — aplikasi agen Android (fase 1)
+# Agen getgua — aplikasi agen Android (fase 2)
 
 Aplikasi Android native (Kotlin, tanpa dependensi eksternal) yang menjadi
 agen pribadi di HP: mengendalikan HP (ketuk, ketik, geser, screenshot),
@@ -13,7 +13,7 @@ kendali jarak jauh dan TANPA token HTTP. Paket `com.getgua.agent`.
 Rencana lengkap: `~/workspace/hermes-termux/RENCANA-APLIKASI-AGEN.md`.
 Catatan build ini: `CATATAN-BUILD.md`.
 
-## Yang sudah jadi (v1.0.1, fase 0 + fase 1)
+## Yang sudah jadi (v1.0.2, fase 0 + fase 1 + fase 2)
 
 - **Kendali HP** — reuse modul getgua client v1.0.1 (baca sebagai
   referensi): Accessibility ACTION_CLICK + dispatchGesture utama,
@@ -60,15 +60,40 @@ Catatan build ini: `CATATAN-BUILD.md`.
 - **Riwayat Aksi** — semua aksi tercatat lokal (Berhasil / Gagal /
   Dikoreksi sendiri); pemakaian otak dicatat (jumlah panggilan +
   token).
+- **Bot Telegram (v1.0.2, fase 2)** — Bot API resmi via HTTPS,
+  long polling `getUpdates` di background service (tanpa webhook).
+  Pesan dari chat_id allowlist dijalankan sebagai perintah lewat
+  AgentLoop yang sama (satu tugas dalam satu waktu, berbagi antrean
+  dengan chat dalam aplikasi); jawabannya dibalas via `sendMessage`
+  dan percakapannya juga tercatat sebagai thread "Telegram" di
+  Sub obrolan. Perintah khusus: `/status`, `/layar` (kirim
+  screenshot via `sendPhoto`), `/batal`, `/start`. Update lama
+  dibuang saat polling mulai supaya perintah usang tidak dijalankan
+  lagi.
 - **Allowlist Telegram** — daftar chat_id yang diizinkan (tambah/
-  hapus) di Pengaturan, tersimpan di SharedPreferences. Botnya baru
-  fase 2, tapi konfigurasinya sudah ada: hanya chat_id terdaftar
-  yang dilayani, pengirim lain diabaikan diam-diam.
+  hapus) di Pengaturan, tersimpan di SharedPreferences. Hanya
+  chat_id terdaftar yang dilayani; pengirim lain diabaikan
+  diam-diam. Bila allowlist kosong, bot tidak melayani siapa pun.
+- **Perintah "hubungkan ke telegram" (v1.0.2)** — dari chat dalam
+  aplikasi, agen menjawab LANGSUNG dengan status Telegram (token
+  sudah diisi/belum, jumlah chat_id di allowlist, polling
+  aktif/tidak) + panduan singkat — tanpa coba-coba ketuk layar.
+- **Pesan error izin yang jelas (v1.0.2)** — bila aksi gagal karena
+  root belum diberi atau layanan Aksesibilitas belum aktif, otak
+  menerima pesan yang jelas ("layanan Aksesibilitas 'Agen getgua'
+  belum aktif" / "izin root belum diberikan") supaya bisa
+  memberitahu Pak apa yang harus diperbaiki — bukan sekadar
+  "exception". Berlaku untuk tap/key/type/layar/screenshot.
+  Cek root di-cache 60 detik supaya tidak memicu prompt Magisk
+  berulang.
+- **Perbaikan kecil (v1.0.2)** — label versi dibaca dari
+  PackageManager (bukan hardcode); tombol Hapus Custom API Key
+  kini minta konfirmasi dulu; error HTTP 403 `client_not_allowed`
+  dari provider dijelaskan dengan jelas + saran ganti endpoint
+  (mis. 9Router).
 
-## Yang belum (fase 2–5, struktur sudah disiapkan)
+## Yang belum (fase 3–5, struktur sudah disiapkan)
 
-- Telegram (fase 2): token bot + allowlist chat_id baru disimpan,
-  belum ada polling.
 - WhatsApp (fase 3): belum ada — hanya catatan di Pengaturan.
 - Skill & Memori (fase 4): daftar + tambah/hapus jalan; pelajaran
   yang relevan sudah dimuat ke konteks loop, tapi skill belum
@@ -84,7 +109,7 @@ Build manual — pola yang sama dipakai getgua client v1.0.0/v1.0.1:
 
 ```bash
 bash build.sh
-# Output: getgua-agent-1.0.1-debug.apk (debug-signed, terverifikasi apksigner)
+# Output: getgua-agent-1.0.2-debug.apk (debug-signed, terverifikasi apksigner)
 ```
 
 Kebutuhan: Android SDK 34 + build-tools 34.0.0 (`~/Android/sdk`),
@@ -105,3 +130,8 @@ JDK 17 (`~/jdk/jdk17`), kotlinc (`~/workspace/tools/kotlinc`).
    Pengaturan → Kunci model). Tanpa model terkunci, otak tidak jalan.
 5. Chat → kirim: `buka Chrome, cari muse ai`. Agen bekerja sendiri;
    pantau di chat + Riwayat Aksi. HENTIKAN AGEN bila perlu.
+6. Telegram: buat bot di @BotFather → tempel token di Pengaturan →
+   tambah chat_id Pak di Allowlist Telegram → buka chat dengan bot,
+   kirim `/start`, lalu perintah seperti biasa. Cek status bot di
+   layar Status (baris Telegram) atau dengan perintah
+   `hubungkan ke telegram` di chat aplikasi.

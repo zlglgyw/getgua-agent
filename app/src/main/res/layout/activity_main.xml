@@ -27,7 +27,7 @@
             android:id="@+id/tvAppBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="v1.0.0"
+            android:text="…"
             android:textSize="12sp"
             android:padding="4dp" />
     </LinearLayout>
@@ -443,6 +443,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Pemakaian: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStTelegram"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Telegram: …"
                 android:textSize="14sp" />
 
             <LinearLayout

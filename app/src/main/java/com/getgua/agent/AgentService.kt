@@ -61,12 +61,14 @@ class AgentService : Service() {
         )
         acquireWakeLock()
         running = true
+        TelegramBot.start()
         AppLog.log("service", "started (loop agen + jadwal, tanpa HTTP)")
         return START_STICKY
     }
 
     override fun onDestroy() {
         running = false
+        TelegramBot.stop()
         releaseWakeLock()
         AppLog.log("service", "destroyed")
         super.onDestroy()

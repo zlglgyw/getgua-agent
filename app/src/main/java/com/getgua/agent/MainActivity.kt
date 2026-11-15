@@ -1,6 +1,7 @@
 package com.getgua.agent
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Typeface
 import android.net.Uri
@@ -67,6 +68,7 @@ class MainActivity : Activity(), AgentLoop.Listener {
     private lateinit var tvPinWarn: TextView
 
     private lateinit var tvStoppedBanner: TextView
+    private lateinit var tvAppBadge: TextView
     private lateinit var apiKeyEditGroup: View
     private lateinit var apiKeySavedGroup: View
     private lateinit var etApiUrl: EditText
@@ -83,6 +85,7 @@ class MainActivity : Activity(), AgentLoop.Listener {
     private lateinit var tvStBattery: TextView
     private lateinit var tvStBrain: TextView
     private lateinit var tvStUsage: TextView
+    private lateinit var tvStTelegram: TextView
 
     private lateinit var jadwalContainer: LinearLayout
     private lateinit var etNewSched: EditText
@@ -120,6 +123,9 @@ class MainActivity : Activity(), AgentLoop.Listener {
         AgentLoop.listener = this
 
         bindViews()
+        // v1.0.2: label versi dari PackageManager (bukan hardcode) —
+        // v1.0.1 sempat tampil "v1.0.0" karena label mentah di layout.
+        tvAppBadge.text = "v" + appVersionName()
         wireNav()
         wireChat()
         wireSubList()
@@ -141,6 +147,24 @@ class MainActivity : Activity(), AgentLoop.Listener {
         refreshApiKeyCard()
         refreshSecretStatus()
         renderTgAllowlist()
+    }
+
+    /** versionName paket yang terpasang (mis. "1.0.2"). */
+    private fun appVersionName(): String {
+        return try {
+            val info = if (android.os.Build.VERSION.SDK_INT >= 33) {
+                packageManager.getPackageInfo(
+                    packageName,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0)
+            }
+            info.versionName ?: "?"
+        } catch (_: Exception) {
+            "?"
+        }
     }
 
     override fun onResume() {
@@ -437,11 +461,21 @@ class MainActivity : Activity(), AgentLoop.Listener {
             refreshApiKeyCard()
         }
         findViewById<Button>(R.id.btnDeleteApiKey).setOnClickListener {
-            Prefs.clearApiKey()
-            editingKey = false
-            refreshApiKeyCard()
-            refreshStatus()
-            Toast.makeText(this, "Custom API Key dihapus", Toast.LENGTH_SHORT).show()
+            // v1.0.2: konfirmasi dulu — kunci API pernah hilang karena
+            // tombol ini tertekan tanpa sengaja. (Ini dialog hapus
+            // biasa, BUKAN kartu konfirmasi aksi agen.)
+            AlertDialog.Builder(this)
+                .setTitle("Hapus Custom API Key?")
+                .setMessage("Alamat API dan kunci API akan dihapus dari aplikasi. Otak tidak bisa jalan sampai diisi lagi.")
+                .setPositiveButton("Hapus") { _, _ ->
+                    Prefs.clearApiKey()
+                    editingKey = false
+                    refreshApiKeyCard()
+                    refreshStatus()
+                    Toast.makeText(this, "Custom API Key dihapus", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Batal", null)
+                .show()
         }
         btnTestBrain.setOnClickListener {
             btnTestBrain.isEnabled = false
@@ -557,6 +591,12 @@ class MainActivity : Activity(), AgentLoop.Listener {
             "BELUM DIATUR — isi Custom API Key di atas"
         }
         tvStUsage.text = "Pemakaian: ${Prefs.usageCalls} panggilan, ${Prefs.usageTokens} token"
+        tvStTelegram.text = "Telegram: " + when {
+            !Prefs.hasTgToken() -> "token belum diisi (atur di Pengaturan)"
+            Prefs.tgAllowlist().isEmpty() -> "token terisi — allowlist KOSONG, bot tidak melayani siapa pun"
+            TelegramBot.polling -> "polling aktif, ${Prefs.tgAllowlist().size} chat_id diizinkan"
+            else -> "token terisi, ${Prefs.tgAllowlist().size} chat_id diizinkan — polling belum aktif"
+        }
         tvStRoot.text = "Root: memeriksa…"
         thread(isDaemon = true) {
             val rootOk = RootShell.isRootAvailable()
@@ -724,7 +764,9 @@ class MainActivity : Activity(), AgentLoop.Listener {
             Prefs.tgToken = v
             etTgToken.setText("")
             refreshSecretStatus()
-            Toast.makeText(this, "Token Telegram tersimpan (dipakai fase 2)", Toast.LENGTH_SHORT).show()
+            // v1.0.2: bot langsung mulai polling (bila service jalan).
+            TelegramBot.kick()
+            Toast.makeText(this, "Token Telegram tersimpan — bot mulai polling", Toast.LENGTH_SHORT).show()
         }
         findViewById<Button>(R.id.btnAddTgAllowlist).setOnClickListener {
             val v = etNewTgAllowlist.text.toString().trim()
@@ -893,6 +935,7 @@ class MainActivity : Activity(), AgentLoop.Listener {
         tvPinWarn = findViewById(R.id.tvPinWarn)
 
         tvStoppedBanner = findViewById(R.id.tvStoppedBanner)
+        tvAppBadge = findViewById(R.id.tvAppBadge)
         apiKeyEditGroup = findViewById(R.id.apiKeyEditGroup)
         apiKeySavedGroup = findViewById(R.id.apiKeySavedGroup)
         etApiUrl = findViewById(R.id.etApiUrl)
@@ -909,6 +952,7 @@ class MainActivity : Activity(), AgentLoop.Listener {
         tvStBattery = findViewById(R.id.tvStBattery)
         tvStBrain = findViewById(R.id.tvStBrain)
         tvStUsage = findViewById(R.id.tvStUsage)
+        tvStTelegram = findViewById(R.id.tvStTelegram)
 
         jadwalContainer = findViewById(R.id.jadwalContainer)
         etNewSched = findViewById(R.id.etNewSched)

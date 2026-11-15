@@ -84,6 +84,19 @@ object ChatStore {
     }
 
     /**
+     * Pastikan thread dengan [id] ada (dipakai bot Telegram:
+     * satu thread per chat_id, mis. "tg:123456789"). Bila belum
+     * ada, buat dengan [name]. Tanpa data seed — thread baru kosong.
+     */
+    @Synchronized
+    fun ensureThread(id: String, name: String) {
+        val all = threads().toMutableList()
+        if (all.any { it.id == id }) return
+        all.add(Thread(id, name, false, emptyList()))
+        save(all)
+    }
+
+    /**
      * Pin/unpin thread. Mengembalikan false bila pin ditolak
      * (sudah 3 thread di-pin).
      */

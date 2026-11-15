@@ -71,7 +71,7 @@ object Prefs {
         prefs.edit().remove(KEY_API_KEY).remove(KEY_API_URL).apply()
     }
 
-    /** Token bot Telegram (fase 2 — baru disimpan, belum dipakai). */
+    /** Token bot Telegram (fase 2 — dipakai TelegramBot untuk polling). */
     var tgToken: String
         get() = prefs.getString(KEY_TG_TOKEN, "") ?: ""
         set(value) = prefs.edit().putString(KEY_TG_TOKEN, value).apply()

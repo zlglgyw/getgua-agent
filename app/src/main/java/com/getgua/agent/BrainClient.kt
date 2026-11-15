@@ -48,7 +48,7 @@ object BrainClient {
             val conn = openConnection("$base/models", key, MODELS_TIMEOUT_MS)
             val (code, body) = readResponse(conn)
             if (code != 200) {
-                return ModelsResult(false, emptyList(), "HTTP $code: ${body.take(200)}")
+                return ModelsResult(false, emptyList(), forbiddenExplanation(code, body) ?: "HTTP $code: ${body.take(200)}")
             }
             val data = JSONObject(body).optJSONArray("data") ?: JSONArray()
             val models = ArrayList<String>()
@@ -101,6 +101,9 @@ object BrainClient {
 
             val (code, respBody) = readResponse(conn)
             if (code != 200) {
+                forbiddenExplanation(code, respBody)?.let {
+                    return ChatResult(null, emptyList(), 0, it, false)
+                }
                 val rejected = code == 400 &&
                     (respBody.contains("tool", ignoreCase = true) ||
                         respBody.contains("function", ignoreCase = true))
@@ -134,6 +137,20 @@ object BrainClient {
         conn.setRequestProperty("Authorization", "Bearer $key")
         conn.setRequestProperty("Accept", "application/json")
         return conn
+    }
+
+    /**
+     * Penjelasan HTTP 403 client_not_allowed / permission_error
+     * (v1.0.2): provider hanya mengizinkan klien pemrograman
+     * tertentu — panggilan API langsung diblokir. Kembalikan pesan
+     * Bahasa Indonesia yang jelas + saran ganti endpoint, atau null
+     * bila bukan kasus ini. User-Agent TIDAK diubah dan tidak ada
+     * upaya meniru klien lain untuk mengakali blokir.
+     */
+    private fun forbiddenExplanation(code: Int, body: String): String? {
+        if (code != 403) return null
+        if (!body.contains("client_not_allowed") && !body.contains("permission_error")) return null
+        return "HTTP 403: provider memblokir klien ini (client_not_allowed) — endpoint ini hanya mengizinkan klien pemrograman tertentu, bukan panggilan API langsung. Coba ganti endpoint, mis. 9Router (http://localhost:20128/v1)."
     }
 
     private fun readResponse(conn: HttpURLConnection): Pair<Int, String> {

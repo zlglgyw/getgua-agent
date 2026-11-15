@@ -52,6 +52,42 @@ object Automation {
 
     private fun a11y(): AgentAccessibilityService? = AgentAccessibilityService.instance
 
+    // --- Diagnosis izin (v1.0.2, pelajaran 15 Nov 15:37) ---
+    // Cek root di-cache 60 detik: `su -c id` yang berulang bisa
+    // memicu prompt Magisk berkali-kali bila root belum diberi.
+    @Volatile private var lastRootCheckMs = 0L
+    @Volatile private var lastRootOk = false
+
+    fun isRootAvailableCached(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastRootCheckMs < 60_000) return lastRootOk
+        val ok = try {
+            RootShell.isRootAvailable()
+        } catch (_: Exception) {
+            false
+        }
+        lastRootOk = ok
+        lastRootCheckMs = now
+        return ok
+    }
+
+    /**
+     * Masalah izin kendali HP, atau null bila root + Aksesibilitas
+     * keduanya tersedia. Pesan Bahasa Indonesia, siap ditampilkan
+     * ke Pak — dipakai di detail kegagalan aksi supaya otak bisa
+     * memberitahu Pak apa yang harus diperbaiki.
+     */
+    fun permissionProblem(): String? {
+        val a11yOk = AgentAccessibilityService.isActive()
+        val rootOk = isRootAvailableCached()
+        return when {
+            a11yOk && rootOk -> null
+            !a11yOk && !rootOk -> "layanan Aksesibilitas 'Agen getgua' belum aktif dan izin root belum diberikan ke aplikasi"
+            !a11yOk -> "layanan Aksesibilitas 'Agen getgua' belum aktif di Pengaturan"
+            else -> "izin root belum diberikan ke aplikasi 'Agen getgua'"
+        }
+    }
+
     /** Tunggu UI tenang sebelum aksi (idle 300ms, maks 2 detik). */
     private fun settle() {
         val s = a11y()
