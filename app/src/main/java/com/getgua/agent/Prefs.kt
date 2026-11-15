@@ -13,8 +13,6 @@ import org.json.JSONArray
  */
 object Prefs {
 
-    const val MODEL_GEMINI = "gemini-flash-lite"
-
     const val URL_9ROUTER = "http://localhost:20128/v1"
 
     private const val FILE = "agen_prefs"
@@ -37,9 +35,17 @@ object Prefs {
         }
     }
 
+    /**
+     * Model otak yang DIKUNCI Pak (v1.0.1). Tidak ada model default —
+     * kosong sampai Pak memilih lewat Tes Otak (Status) atau mengetik
+     * ID model bebas di Pengaturan. Otak TIDAK PERNAH memakai model
+     * lain selain yang terkunci di sini.
+     */
     var model: String
-        get() = prefs.getString(KEY_MODEL, MODEL_GEMINI) ?: MODEL_GEMINI
-        set(value) = prefs.edit().putString(KEY_MODEL, value).apply()
+        get() = prefs.getString(KEY_MODEL, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_MODEL, value.trim()).apply()
+
+    fun hasModel(): Boolean = model.isNotEmpty()
 
     /** Alamat endpoint OpenAI-compatible (9Router atau provider lain). */
     var apiUrl: String

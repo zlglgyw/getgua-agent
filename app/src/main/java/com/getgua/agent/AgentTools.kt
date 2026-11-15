@@ -40,6 +40,9 @@ object AgentTools {
         Def("wait", "Tunggu sekian detik.", listOf(Triple("seconds", "number", true))),
         Def("ui", "Baca ulang isi layar saat ini (daftar elemen).", emptyList()),
         Def("screenshot", "Ambil screenshot layar saat ini (dipakai untuk verifikasi).", emptyList()),
+        Def("create_schedule", "Buat jadwal klaim baru — masuk ke daftar Jadwal Klaim yang sama dengan yang dibuat manual. interval bebas: tulis apa adanya seperti yang Pak minta, mis. \"45 menit\", \"3 jam\", \"2 hari\", \"07:05\".", listOf(Triple("name", "string", true), Triple("interval", "string", true))),
+        Def("list_schedules", "Lihat daftar jadwal klaim yang sudah ada.", emptyList()),
+        Def("add_memory", "Catat teks sebagai memori (catatan) agar agen mengingatnya — tampil di Skill & Memori.", listOf(Triple("text", "string", true))),
         Def("done", "Tugas selesai — sampaikan hasil akhirnya ke Pak.", listOf(Triple("message", "string", true))),
     )
 
@@ -148,6 +151,35 @@ object AgentTools {
                         ToolOutcome(false, "screenshot_failed", "Screenshot gagal diambil", null)
                     } else {
                         ToolOutcome(true, "screenshot", "Screenshot diambil (${png.size} byte).", null)
+                    }
+                }
+                // --- Agen MENULIS/MEMBUAT (v1.0.1): langsung ke penyimpanan,
+                // tanpa menyentuh layar. ---
+                "create_schedule" -> {
+                    val schedName = args.optString("name", "").trim()
+                    val interval = args.optString("interval", "").trim()
+                    if (schedName.isEmpty() || interval.isEmpty()) {
+                        ToolOutcome(false, "invalid_args", "create_schedule butuh name + interval", null)
+                    } else {
+                        val s = ScheduleStore.add(schedName, interval)
+                        ToolOutcome(true, "schedule_created", "Jadwal dibuat: \"${s.name}\" — ${s.interval} (aktif, masuk daftar Jadwal Klaim)", null)
+                    }
+                }
+                "list_schedules" -> {
+                    val list = ScheduleStore.load()
+                    if (list.isEmpty()) {
+                        ToolOutcome(true, "schedules_empty", "Belum ada jadwal.", null)
+                    } else {
+                        ToolOutcome(true, "schedules", list.joinToString("\n") { "- ${it.name} — ${it.interval} (${if (it.active) "aktif" else "mati"})" }, null)
+                    }
+                }
+                "add_memory" -> {
+                    val text = args.optString("text", "").trim()
+                    if (text.isEmpty()) {
+                        ToolOutcome(false, "invalid_args", "add_memory butuh text", null)
+                    } else {
+                        LearningStore.addMemory(text)
+                        ToolOutcome(true, "memory_added", "Memori dicatat: \"$text\"", null)
                     }
                 }
                 else -> ToolOutcome(false, "unknown_tool", "Tool tidak dikenal: $name", null)

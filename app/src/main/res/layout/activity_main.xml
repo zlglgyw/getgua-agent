@@ -379,6 +379,11 @@
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
                 android:padding="4dp" />
+            <LinearLayout
+                android:id="@+id/modelListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
 
             <Button
                 android:id="@+id/btnOpenJadwal"
@@ -428,12 +433,6 @@
                 android:text="Baterai: …"
                 android:textSize="14sp" />
             <TextView
-                android:id="@+id/tvStToken"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Token HTTP: …"
-                android:textSize="14sp" />
-            <TextView
                 android:id="@+id/tvStBrain"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -446,56 +445,6 @@
                 android:text="Pemakaian: …"
                 android:textSize="14sp" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingTop="12dp"
-                android:text="TOKEN HTTP (PORT 8767)"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Token yang sama dengan getgua client (dibaca dari file Termux). Bila tidak terbaca, masukkan manual di bawah."
-                android:textSize="13sp" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <EditText
-                    android:id="@+id/etHttpToken"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="Token manual (min 20 karakter)"
-                    android:inputType="textPassword" />
-                <Button
-                    android:id="@+id/btnSaveHttpToken"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Simpan" />
-            </LinearLayout>
-            <Button
-                android:id="@+id/btnClearHttpToken"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hapus token manual" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button
-                    android:id="@+id/btnStartService"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mulai Service" />
-                <Button
-                    android:id="@+id/btnStopService"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hentikan Service" />
-            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -555,18 +504,18 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:padding="8dp">
             <EditText
                 android:id="@+id/etNewSched"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:hint="Nama tugas, mis. Klaim Octos" />
-            <Spinner
-                android:id="@+id/spSchedInterval"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+            <EditText
+                android:id="@+id/etSchedInterval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Jadwal bebas, mis. 45 menit / 3 jam / 2 hari / 07:05" />
             <Button
                 android:id="@+id/btnAddSched"
                 android:layout_width="wrap_content"
@@ -724,16 +673,13 @@
                 android:text="OTAK"
                 android:textSize="12sp"
                 android:textStyle="bold" />
-            <RadioGroup
-                android:id="@+id/rgModel"
+            <TextView
+                android:id="@+id/tvLockedModel"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <RadioButton
-                    android:id="@+id/rbGemini"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Gemini flash-lite (gratis)" />
-            </RadioGroup>
+                android:layout_height="wrap_content"
+                android:text="Model terkunci: BELUM DIPILIH"
+                android:textSize="14sp"
+                android:padding="4dp" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -743,12 +689,12 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="Ketik ID model lain (lihat daftar lewat Tes Otak di Status)" />
+                    android:hint="Ketik ID model (atau pilih lewat Tes Otak di Status)" />
                 <Button
                     android:id="@+id/btnSaveModel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Pakai" />
+                    android:text="Kunci model" />
             </LinearLayout>
             <Button
                 android:id="@+id/btnApiKeyRow"

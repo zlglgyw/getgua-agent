@@ -2,15 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.getgua.agent">
 
-    <!-- HTTP server kendali jarak jauh (port 8767, Tailscale, token-auth)
-         + panggilan otak ke endpoint OpenAI-compatible. -->
+    <!-- Panggilan otak ke endpoint OpenAI-compatible. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Foreground service agar tidak di-kill Android seperti Termux. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Autostart setelah HP reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Jaga CPU tetap bangun supaya server HTTP selalu merespons. -->
+    <!-- Jaga CPU tetap bangun supaya loop agen/jadwal tetap berjalan. -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Minta pengecualian battery optimization (aksi Pak, sekali saja). -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -38,7 +37,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="On-device personal agent: token-authenticated HTTP control (port 8767) + autonomous phone automation for the owner." />
+                android:value="On-device personal agent: autonomous phone automation for the owner, commanded via chat through the brain API key." />
         </service>
 
         <receiver

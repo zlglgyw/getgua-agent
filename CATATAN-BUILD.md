@@ -1,58 +1,75 @@
-# Catatan Build — Agen getgua v1.0.0
+# Catatan Build — Agen getgua v1.0.1
 
-Dibangun 15 Nov 2026 (fase 0 + fase 1) atas perintah Pak (lampu hijau
-14:29 WIB). Toolchain manual: aapt2 + kotlinc + d8 + apksigner
-(tanpa Gradle — JVM tidak bisa akses jaringan di sandbox).
+Dibangun 15 Nov 2026 atas perintah Pak di chat utama (14:53–14:58 WIB).
+Toolchain manual: aapt2 + kotlinc + d8 + apksigner (tanpa Gradle —
+JVM tidak bisa akses jaringan di sandbox).
 
 ## Hasil build
 
-- APK: `getgua-agent-1.0.0-debug.apk` — 778 KB, debug-signed,
-  `apksigner verify` LULUS, paket `com.getgua.agent`, versionCode 1,
-  minSdk 30 / targetSdk 34, tanpa dependensi eksternal.
-- Kode: 20 berkas Kotlin, ~4.500 baris (reuse modul getgua client
-  v1.0.1 sebagai referensi + ~2.000 baris baru: loop otak, chat UI,
-  penyimpanan lokal).
-- Peringatan compile: hanya deprecation `recycle()` (diwarisi dari
-  kode getgua client, tidak berpengaruh) — tidak ada error.
+- APK: `getgua-agent-1.0.1-debug.apk` — debug-signed (keystore yang
+  SAMA dengan v1.0.0, jadi bisa install menimpa), `apksigner verify`
+  LULUS, paket `com.getgua.agent`, versionCode 2, minSdk 30 /
+  targetSdk 34, tanpa dependensi eksternal.
+- Kode: 21 berkas Kotlin (3 dihapus, 1 baru: ScheduleStore).
+
+## Yang berubah dari v1.0.0 (semua atas perintah Pak)
+
+1. **Pilih + kunci model (BUG v1.0.0).** Otak v1.0.0 terkunci ke model
+   default yang tidak ada di endpoint Pak — semua panggilan chat
+   gagal HTTP 404 `model_not_found`. v1.0.1: TIDAK ADA model default.
+   Sesudah Tes Otak berhasil, daftar model tampil dan bisa diketuk
+   untuk DIKUNCI (SharedPreferences); alternatif: ketik ID model bebas
+   di Pengaturan → "Kunci model". Otak hanya memakai model yang
+   terkunci — tanpa model terkunci, otak menolak dengan pesan jelas.
+2. **Tanpa data bawaan.** Install pertama = kosong total: jadwal
+   (4 jadwal contoh dihapus), skill/pelajaran/memori contoh dihapus,
+   tanpa model default, tanpa alamat API default. Riwayat Aksi +
+   Laporan Harian memang sudah kosong (hanya dari aksi nyata).
+3. **Bukan getgua client.** Server HTTP kendali jarak jauh, token HTTP
+   (termasuk baca file config Termux), input token manual, dan tombol
+   MULAI/HENTIKAN SERVICE DIHAPUS TOTAL (ketiga berkas server/token
+   dihapus). Foreground
+   service tinggal untuk loop agen + penjadwalan. Aplikasi jalan
+   sendiri, diperintah lewat chat melalui otak (API key).
+4. **Jadwal klaim bebas.** Pilihan interval bawaan (30 menit / 90 menit
+   / 4 jam / 24 jam) DIHAPUS. Pak menulis sendiri jadwalnya di kolom
+   bebas (mis. "45 menit", "3 jam", "2 hari", "07:05").
+5. **Agen bisa menulis/membuat.** Tool baru di loop agen:
+   `create_schedule` (buat jadwal — masuk daftar yang sama dengan yang
+   dibuat manual), `list_schedules`, `add_memory` (catat memori).
+   Pak bisa memerintah lewat chat: "buatkan jadwal klaim X tiap ...".
+   Jadwal disimpan lewat ScheduleStore (satu sumber kebenaran).
 
 ## Keputusan yang dipakai saat build
 
-- Paket `com.getgua.agent`, port HTTP **8767** (getgua client 8766).
-  `/stop_app` melindungi `com.getgua.agent` DAN `com.getgua.client`
-  supaya keduanya tetap hidup berdampingan.
-- Token HTTP sama dengan getgua client (file phone_config.json Termux
-  + input manual sebagai fallback — pelajaran dari v1.0.0 getgua
-  client yang tokennya tidak terbaca dari file).
+- Paket `com.getgua.agent`. `stopApp` melindungi `com.getgua.agent`
+  DAN `com.getgua.client` supaya keduanya tetap hidup berdampingan.
 - 9Router OPSIONAL: otak memanggil endpoint OpenAI-compatible lewat
   Custom API Key; preset hanya 9Router + kolom alamat bebas.
-- **Provider yang dihapus atas perintah Pak (14:34 WIB)** — preset
-  endpoint dan modelnya DIHAPUS TOTAL dari aplikasi; model dipilih
-  per ID lewat kolom teks bebas + daftar dari Tes Otak
-  (`GET /v1/models`).
 - Tanpa kartu konfirmasi Izinkan/Tolak (ditolak Pak 14:04 WIB) —
   konfirmasi aksi berisiko lewat balasan chat ("ya"/"tidak").
-- Allowlist Telegram WAJIB (Pak, 14:37 WIB): daftar chat_id sudah
-  bisa dikonfigurasi di Pengaturan sejak fase 1 (tambah/hapus,
+- Allowlist Telegram WAJIB (Pak, 15 Nov 14:37 WIB): daftar chat_id
+  sudah bisa dikonfigurasi di Pengaturan sejak fase 1 (tambah/hapus,
   SharedPreferences); botnya sendiri baru fase 2.
 - `usesCleartextTraffic=true` di manifest — diperlukan untuk
   endpoint 9Router di `http://localhost:20128`.
 
-## Yang sudah terverifikasi (di VM, tanpa HP)
+## Verifikasi grep (v1.0.1, di seluruh folder proyek)
 
-- APK ter-build + ter-sign + lolos `apksigner verify` dan
-  `aapt2 dump badging` (paket, versi, SDK benar).
-- Verifikasi grep: tidak ada preset endpoint / model dari provider
-  yang dihapus di seluruh folder proyek.
-- Tidak ada referensi kelas getgua client yang tertinggal.
+- 0 sebutan provider yang dihapus atas perintah Pak (14:34 WIB).
+- 0 model default.
+- 0 port HTTP.
+- 0 baca file config Termux.
+- Tidak ada kode server HTTP / token yang tertinggal.
 
 ## Yang BELUM teruji (butuh HP + Pak)
 
-- Install di HP Infinix + izin root + aksesibilitas + battery
+- Install menimpa v1.0.0 + izin root + aksesibilitas + battery
   exemption (langkah yang sama seperti getgua client).
-- Service jalan di port 8767 + token terbaca (`/health`).
-- Tes Otak (`GET /v1/models`) dengan key Pak sendiri.
-- Perintah pertama end-to-end: "buka Chrome, cari muse ai"
-  (function calling vs mode JSON — tergantung model yang dipakai).
+- Tes Otak + kunci model + perintah pertama end-to-end:
+  "buka Chrome, cari muse ai" (function calling vs mode JSON —
+  tergantung model yang dipakai).
+- Perintah "buatkan jadwal ..." lewat chat (tool create_schedule).
 - Koreksi diri (3x gagal → berhenti + lapor) dan HENTIKAN AGEN.
 - Konfirmasi aksi berisiko lewat chat.
 - Ketahanan service 24 jam di XOS + autostart sesudah reboot.
@@ -60,16 +77,21 @@ Dibangun 15 Nov 2026 (fase 0 + fase 1) atas perintah Pak (lampu hijau
 
 ## Yang butuh Pak
 
-1. Install APK + izin (root, aksesibilitas, baterai) — lihat README.
-2. Masukkan Custom API Key sendiri di aplikasi (alamat + key).
-3. Tes perintah pertama + laporkan hasilnya (apa yang jalan,
-   apa yang gagal) untuk iterasi berikutnya.
-4. Buat repo `zlglgyw/getgua-agent` di GitHub bila kode mau di-push
-   (Muse tidak bisa membuat repo; push dilakukan atas perintah Pak).
+1. Install APK v1.0.1 (menimpa v1.0.0 — tanda tangan sama).
+2. Status → Tes Otak → ketuk salah satu model untuk menguncinya.
+3. Tes perintah pertama + perintah "buatkan jadwal ..." + laporkan
+   hasilnya untuk iterasi berikutnya.
+
+## Riwayat
+
+- v1.0.0 (15 Nov 14:39 WIB): fase 0 + fase 1, 778 KB, commit
+  40ab88ff. Termasuk server HTTP + token (dihapus di
+  v1.0.1) dan data contoh dari mockup (dihapus di v1.0.1).
+- v1.0.1 (15 Nov ~15:00 WIB): perbaikan di atas.
 
 ## Bukan bagian build ini
 
-- Fase 2 (Telegram), 3 (WhatsApp), 4 (skill/memoripenuh), 5
-  (jadwal/proaktif) — struktur disiapkan, eksekusi menyusul.
-- Tidak ada push ke repo mana pun (atas perintah tugas).
+- Fase 2 (Telegram), 3 (WhatsApp), 4 (skill/memori penuh), 5
+  (jadwal/proaktif: eksekusi otomatis jadwal) — struktur disiapkan,
+  eksekusi menyusul.
 - Repo getgua client tidak disentuh (hanya dibaca sebagai referensi).

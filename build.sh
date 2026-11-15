@@ -3,7 +3,7 @@
 # network di sandbox ini, jadi Gradle tidak bisa jalan).
 # Pola yang sama dipakai getgua client v1.0.0/v1.0.1 + prototype UI.
 #
-# Output: getgua-agent-1.0.0-debug.apk (di direktori ini).
+# Output: getgua-agent-1.0.1-debug.apk (di direktori ini).
 set -e
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,9 +19,9 @@ STDLIB="$HOME/workspace/tools/kotlinc/lib/kotlin-stdlib.jar"
 export JAVA_HOME="$JDK"
 export PATH="$JDK/bin:$PATH"
 
-VERSION_CODE=1
-VERSION_NAME="1.0.0"
-APK_OUT="getgua-agent-1.0.0-debug.apk"
+VERSION_CODE=2
+VERSION_NAME="1.0.1"
+APK_OUT="getgua-agent-1.0.1-debug.apk"
 
 echo "== Agen getgua $VERSION_NAME (code $VERSION_CODE) =="
 echo "Java: $(javac -version 2>&1)"

@@ -74,6 +74,15 @@ object BrainClient {
         if (base.isEmpty() || key.isEmpty()) {
             return ChatResult(null, emptyList(), 0, "Alamat API / kunci belum diatur di Status")
         }
+        // v1.0.1: otak hanya memakai model yang DIKUNCI Pak — tanpa
+        // model terkunci, tolak dengan jelas (tidak ada model cadangan).
+        val model = Prefs.model
+        if (model.isEmpty()) {
+            return ChatResult(
+                null, emptyList(), 0,
+                "Model belum dipilih — buka Status, ketuk Tes Otak, lalu ketuk salah satu model untuk menguncinya",
+            )
+        }
         return try {
             val body = JSONObject()
                 .put("model", Prefs.model)

@@ -71,6 +71,10 @@ object AgentLoop {
             postToChat(threadId, "agent", "Otak belum diatur, Pak. Isi dulu Custom API Key di menu Status (alamat + kunci API), lalu coba lagi.")
             return false
         }
+        if (!Prefs.hasModel()) {
+            postToChat(threadId, "agent", "Model belum dipilih, Pak. Buka menu Status, ketuk Tes Otak, lalu ketuk salah satu model untuk menguncinya — atau ketik ID model di Pengaturan.")
+            return false
+        }
         running = true
         stopRequested = false
         confirmDecision = null
@@ -353,6 +357,7 @@ object AgentLoop {
         sb.append("4. Jangan pernah mengetik seed phrase, kata sandi, atau kode sandi.\n")
         sb.append("5. Kalau tugas selesai, panggil tool done dengan pesan hasil akhirnya.\n")
         sb.append("6. Kalau perintah tidak jelas, selesaikan dengan done berisi pertanyaanmu — jangan menebak aksi berisiko.\n")
+        sb.append("7. Kamu BISA menulis/membuat sendiri tanpa menyentuh layar: create_schedule untuk membuat jadwal (jadwal bebas — tulis interval apa adanya seperti yang Pak minta, mis. \"45 menit\" / \"3 jam\" / \"07:05\"), list_schedules untuk melihat jadwal yang ada, add_memory untuk mencatat. Kalau Pak minta dibuatkan jadwal/catatan, langsung pakai tool-nya — jangan buka layar lalu ketuk-ketuk form.\n")
         if (lessons.isNotEmpty()) {
             sb.append("\nPelajaran dari koreksi Pak (wajib dipakai):\n")
             for (l in lessons) sb.append("- ").append(l.text).append("\n")

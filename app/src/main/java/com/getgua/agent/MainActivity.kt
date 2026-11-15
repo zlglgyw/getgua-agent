@@ -13,13 +13,10 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import org.json.JSONArray
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,6 +28,9 @@ import kotlin.concurrent.thread
  * 4 tab: Chat | Sub obrolan | Status | Pengaturan, plus layar
  * dalam: Thread, Jadwal Klaim, Riwayat Aksi, Laporan Harian,
  * Skill & Memori. Chat NYATA: perintah dikirim ke AgentLoop.
+ *
+ * v1.0.1: tanpa server HTTP/token (bukan getgua client), tanpa data
+ * bawaan, model dipilih Pak lewat Tes Otak lalu DIKUNCI.
  */
 class MainActivity : Activity(), AgentLoop.Listener {
 
@@ -76,24 +76,23 @@ class MainActivity : Activity(), AgentLoop.Listener {
     private lateinit var tvApiKeyMasked: TextView
     private lateinit var tvTestBrainResult: TextView
     private lateinit var btnTestBrain: Button
+    private lateinit var modelListContainer: LinearLayout
     private lateinit var tvStService: TextView
     private lateinit var tvStRoot: TextView
     private lateinit var tvStA11y: TextView
     private lateinit var tvStBattery: TextView
-    private lateinit var tvStToken: TextView
     private lateinit var tvStBrain: TextView
     private lateinit var tvStUsage: TextView
-    private lateinit var etHttpToken: EditText
 
     private lateinit var jadwalContainer: LinearLayout
     private lateinit var etNewSched: EditText
-    private lateinit var spSchedInterval: Spinner
+    private lateinit var etSchedInterval: EditText
     private lateinit var riwayatContainer: LinearLayout
     private lateinit var tvLaporanStats: TextView
     private lateinit var tvLaporanAttention: TextView
     private lateinit var spReportTime: Spinner
 
-    private lateinit var rgModel: RadioGroup
+    private lateinit var tvLockedModel: TextView
     private lateinit var etCustomModel: EditText
     private lateinit var etAllowlist: EditText
     private lateinit var etTgToken: EditText
@@ -113,7 +112,6 @@ class MainActivity : Activity(), AgentLoop.Listener {
         setContentView(R.layout.activity_main)
         AppLog.init(this)
         Automation.init(this)
-        TokenStore.init(this)
         Prefs.init(this)
         ActionLog.init(this)
         ChatStore.init(this)
@@ -448,15 +446,20 @@ class MainActivity : Activity(), AgentLoop.Listener {
         btnTestBrain.setOnClickListener {
             btnTestBrain.isEnabled = false
             tvTestBrainResult.text = "Menghubungi endpoint…"
+            modelListContainer.removeAllViews()
             thread(isDaemon = true) {
                 val r = BrainClient.testModels()
                 runOnUiThread {
                     btnTestBrain.isEnabled = true
-                    tvTestBrainResult.text = if (r.ok) {
-                        if (r.models.isEmpty()) "Terhubung — server tidak mengembalikan daftar model."
-                        else "Terhubung — ${r.models.size} model: " + r.models.take(5).joinToString(", ")
+                    if (r.ok) {
+                        if (r.models.isEmpty()) {
+                            tvTestBrainResult.text = "Terhubung — server tidak mengembalikan daftar model. Ketik ID model di Pengaturan."
+                        } else {
+                            tvTestBrainResult.text = "Terhubung — ${r.models.size} model. Ketuk salah satu untuk menguncinya:"
+                            renderModelList(r.models)
+                        }
                     } else {
-                        "Gagal: ${r.error}"
+                        tvTestBrainResult.text = "Gagal: ${r.error}"
                     }
                 }
             }
@@ -464,14 +467,6 @@ class MainActivity : Activity(), AgentLoop.Listener {
         findViewById<Button>(R.id.btnOpenJadwal).setOnClickListener { showScreen(SCREEN_JADWAL); renderJadwal() }
         findViewById<Button>(R.id.btnOpenRiwayat).setOnClickListener { showScreen(SCREEN_RIWAYAT); renderRiwayat() }
         findViewById<Button>(R.id.btnOpenLaporan).setOnClickListener { showScreen(SCREEN_LAPORAN); renderLaporan() }
-        findViewById<Button>(R.id.btnStartService).setOnClickListener {
-            startForegroundService(Intent(this, AgentService::class.java))
-            refreshStatus()
-        }
-        findViewById<Button>(R.id.btnStopService).setOnClickListener {
-            startService(Intent(this, AgentService::class.java).setAction(AgentService.ACTION_STOP))
-            refreshStatus()
-        }
         findViewById<Button>(R.id.btnA11y).setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
@@ -487,37 +482,48 @@ class MainActivity : Activity(), AgentLoop.Listener {
             }
         }
         findViewById<Button>(R.id.btnRefreshStatus).setOnClickListener { refreshStatus() }
-        findViewById<Button>(R.id.btnSaveHttpToken).setOnClickListener {
-            val t = etHttpToken.text.toString().trim()
-            if (t.length < 20) {
-                Toast.makeText(this, "Token terlalu pendek (min 20 karakter)", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+    }
+
+    // ------------------------------------------------------------------
+    // Pilih + kunci model (v1.0.1)
+    // ------------------------------------------------------------------
+
+    /** Daftar model dari Tes Otak — ketuk salah satu untuk menguncinya. */
+    private fun renderModelList(models: List<String>) {
+        modelListContainer.removeAllViews()
+        for (id in models) {
+            val locked = id == Prefs.model
+            val btn = Button(this).apply {
+                text = if (locked) "● $id (terkunci)" else id
+                setOnClickListener { lockModel(id) }
             }
-            thread(isDaemon = true) {
-                val ok = TokenStore.saveManualToken(t)
-                runOnUiThread {
-                    if (ok) {
-                        etHttpToken.setText("")
-                        Toast.makeText(this, "Token manual tersimpan", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Gagal menyimpan token", Toast.LENGTH_SHORT).show()
-                    }
-                    refreshStatus()
-                }
+            modelListContainer.addView(btn)
+        }
+    }
+
+    /** Kunci model: dipakai semua panggilan otak sampai Pak mengubahnya. */
+    private fun lockModel(id: String) {
+        val clean = id.trim()
+        if (clean.isEmpty()) return
+        Prefs.model = clean
+        refreshLockedModel()
+        refreshStatus()
+        // Tandai ulang tombol yang terkunci bila daftar sedang tampil.
+        for (i in 0 until modelListContainer.childCount) {
+            val v = modelListContainer.getChildAt(i)
+            if (v is Button) {
+                val mid = v.text.toString().removePrefix("● ").removeSuffix(" (terkunci)")
+                v.text = if (mid == clean) "● $mid (terkunci)" else mid
             }
         }
-        findViewById<Button>(R.id.btnClearHttpToken).setOnClickListener {
-            thread(isDaemon = true) {
-                val ok = TokenStore.clearManualToken()
-                runOnUiThread {
-                    Toast.makeText(
-                        this,
-                        if (ok) "Token manual dihapus — kembali ke file Termux" else "Gagal menghapus token",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    refreshStatus()
-                }
-            }
+        Toast.makeText(this, "Model dikunci: $clean", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun refreshLockedModel() {
+        tvLockedModel.text = if (Prefs.hasModel()) {
+            "Model terkunci: ${Prefs.model}"
+        } else {
+            "Model terkunci: BELUM DIPILIH — ketuk Tes Otak di Status, lalu ketuk salah satu model."
         }
     }
 
@@ -537,27 +543,24 @@ class MainActivity : Activity(), AgentLoop.Listener {
     }
 
     private fun refreshStatus() {
-        tvStService.text = "Service: " + if (AgentService.running) "JALAN (port 8767)" else "berhenti"
+        tvStService.text = "Service: " + if (AgentService.running) "JALAN" else "berhenti"
         tvStA11y.text = "Aksesibilitas: " +
             if (AgentAccessibilityService.isActive()) "AKTIF" else "tidak aktif — aktifkan di Pengaturan > Aksesibilitas"
         tvStBattery.text = "Baterai: " + (DeviceInfo.batteryLevel(this)?.let { "$it%" } ?: "…")
         tvStBrain.text = "Otak: " + if (Prefs.hasBrainConfig()) {
-            "teratur — ${Prefs.model} @ ${Prefs.apiUrl}"
+            if (Prefs.hasModel()) {
+                "teratur — ${Prefs.model} @ ${Prefs.apiUrl}"
+            } else {
+                "kunci API terisi — MODEL BELUM DIPILIH (ketuk Tes Otak lalu pilih model)"
+            }
         } else {
             "BELUM DIATUR — isi Custom API Key di atas"
         }
         tvStUsage.text = "Pemakaian: ${Prefs.usageCalls} panggilan, ${Prefs.usageTokens} token"
-        tvStToken.text = "Token HTTP: memeriksa…"
         tvStRoot.text = "Root: memeriksa…"
         thread(isDaemon = true) {
-            val source = TokenStore.tokenSource()
             val rootOk = RootShell.isRootAvailable()
             runOnUiThread {
-                tvStToken.text = "Token HTTP: " + when (source) {
-                    TokenStore.SOURCE_MANUAL -> "TERBACA (manual — input aplikasi)"
-                    TokenStore.SOURCE_FILE -> "TERBACA (file Termux)"
-                    else -> "TIDAK TERBACA — masukkan token manual di bawah"
-                }
                 tvStRoot.text = "Root: " + if (rootOk) "tersedia (uid=0)" else "TIDAK TERSEDIA — izinkan root saat prompt muncul"
             }
         }
@@ -571,19 +574,14 @@ class MainActivity : Activity(), AgentLoop.Listener {
         findViewById<Button>(R.id.btnJadwalBack).setOnClickListener { showScreen(SCREEN_STATUS) }
         findViewById<Button>(R.id.btnRiwayatBack).setOnClickListener { showScreen(SCREEN_STATUS) }
         findViewById<Button>(R.id.btnLaporanBack).setOnClickListener { showScreen(SCREEN_STATUS) }
-        spSchedInterval.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            listOf("Tiap 30 menit", "Tiap 90 menit", "Tiap 4 jam", "Tiap 24 jam"),
-        ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-        spSchedInterval.setSelection(1)
         findViewById<Button>(R.id.btnAddSched).setOnClickListener {
             val name = etNewSched.text.toString().trim()
             if (name.isEmpty()) return@setOnClickListener
-            val list = loadSchedules().toMutableList()
-            list.add(Schedule("j" + System.currentTimeMillis(), name, spSchedInterval.selectedItem.toString(), "Akan dijadwalkan", true))
-            saveSchedules(list)
+            // v1.0.1: jadwal BEBAS — Pak yang menulis sendiri (mis. "45 menit",
+            // "3 jam", "2 hari", "07:05"). Tanpa pilihan interval bawaan.
+            ScheduleStore.add(name, etSchedInterval.text.toString())
             etNewSched.setText("")
+            etSchedInterval.setText("")
             renderJadwal()
         }
         findViewById<Button>(R.id.btnClearLog).setOnClickListener {
@@ -607,44 +605,9 @@ class MainActivity : Activity(), AgentLoop.Listener {
         }
     }
 
-    private data class Schedule(val id: String, val name: String, val interval: String, val next: String, val active: Boolean)
-
-    private fun loadSchedules(): List<Schedule> {
-        val raw = Prefs.schedulesJson
-        if (raw.isEmpty()) {
-            val seed = listOf(
-                Schedule("j1", "Klaim Bullshot", "Tiap 90 menit", "15:35", true),
-                Schedule("j2", "Sync Zoi", "Tiap 4 jam", "17:34", true),
-                Schedule("j3", "Klaim Qubrix", "Tiap 24 jam", "Besok 09:37", true),
-                Schedule("j4", "Daily MyAge", "Tiap 24 jam", "Besok 07:05", false),
-            )
-            saveSchedules(seed)
-            return seed
-        }
-        return try {
-            val arr = JSONArray(raw)
-            val out = ArrayList<Schedule>()
-            for (i in 0 until arr.length()) {
-                val o = arr.getJSONObject(i)
-                out.add(Schedule(o.optString("id"), o.optString("name"), o.optString("interval"), o.optString("next"), o.optBoolean("active", true)))
-            }
-            out
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
-    private fun saveSchedules(list: List<Schedule>) {
-        val arr = JSONArray()
-        for (s in list) {
-            arr.put(JSONObject().put("id", s.id).put("name", s.name).put("interval", s.interval).put("next", s.next).put("active", s.active))
-        }
-        Prefs.schedulesJson = arr.toString()
-    }
-
     private fun renderJadwal() {
         jadwalContainer.removeAllViews()
-        val list = loadSchedules()
+        val list = ScheduleStore.load()
         for (s in list) {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -659,8 +622,7 @@ class MainActivity : Activity(), AgentLoop.Listener {
             val tog = Button(this).apply {
                 text = if (s.active) "Aktif" else "Mati"
                 setOnClickListener {
-                    val updated = loadSchedules().map { if (it.id == s.id) it.copy(active = !it.active) else it }
-                    saveSchedules(updated)
+                    ScheduleStore.setActive(s.id, !s.active)
                     renderJadwal()
                 }
             }
@@ -736,24 +698,12 @@ class MainActivity : Activity(), AgentLoop.Listener {
     // ------------------------------------------------------------------
 
     private fun wireSettings() {
-        if (Prefs.model == Prefs.MODEL_GEMINI) {
-            rgModel.check(R.id.rbGemini)
-        } else {
-            rgModel.clearCheck()
-            etCustomModel.setText(Prefs.model)
-        }
-        rgModel.setOnCheckedChangeListener { _, checkedId ->
-            if (checkedId != R.id.rbGemini) return@setOnCheckedChangeListener
-            Prefs.model = Prefs.MODEL_GEMINI
-            etCustomModel.setText("")
-            Toast.makeText(this, "Model dipilih: ${Prefs.model}", Toast.LENGTH_SHORT).show()
-        }
+        refreshLockedModel()
         findViewById<Button>(R.id.btnSaveModel).setOnClickListener {
             val v = etCustomModel.text.toString().trim()
             if (v.isEmpty()) return@setOnClickListener
-            Prefs.model = v
-            rgModel.clearCheck()
-            Toast.makeText(this, "Model dipilih: $v", Toast.LENGTH_SHORT).show()
+            lockModel(v)
+            etCustomModel.setText("")
         }
         findViewById<Button>(R.id.btnApiKeyRow).setOnClickListener {
             showScreen(SCREEN_STATUS)
@@ -952,24 +902,23 @@ class MainActivity : Activity(), AgentLoop.Listener {
         tvApiKeyMasked = findViewById(R.id.tvApiKeyMasked)
         tvTestBrainResult = findViewById(R.id.tvTestBrainResult)
         btnTestBrain = findViewById(R.id.btnTestBrain)
+        modelListContainer = findViewById(R.id.modelListContainer)
         tvStService = findViewById(R.id.tvStService)
         tvStRoot = findViewById(R.id.tvStRoot)
         tvStA11y = findViewById(R.id.tvStA11y)
         tvStBattery = findViewById(R.id.tvStBattery)
-        tvStToken = findViewById(R.id.tvStToken)
         tvStBrain = findViewById(R.id.tvStBrain)
         tvStUsage = findViewById(R.id.tvStUsage)
-        etHttpToken = findViewById(R.id.etHttpToken)
 
         jadwalContainer = findViewById(R.id.jadwalContainer)
         etNewSched = findViewById(R.id.etNewSched)
-        spSchedInterval = findViewById(R.id.spSchedInterval)
+        etSchedInterval = findViewById(R.id.etSchedInterval)
         riwayatContainer = findViewById(R.id.riwayatContainer)
         tvLaporanStats = findViewById(R.id.tvLaporanStats)
         tvLaporanAttention = findViewById(R.id.tvLaporanAttention)
         spReportTime = findViewById(R.id.spReportTime)
 
-        rgModel = findViewById(R.id.rgModel)
+        tvLockedModel = findViewById(R.id.tvLockedModel)
         etCustomModel = findViewById(R.id.etCustomModel)
         etAllowlist = findViewById(R.id.etAllowlist)
         etTgToken = findViewById(R.id.etTgToken)

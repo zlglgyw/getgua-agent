@@ -14,16 +14,18 @@ import android.os.PowerManager
 /**
  * Foreground service utama aplikasi agen.
  *
- * Menjalankan server HTTP kendali jarak jauh di port 8767
- * (getgua client memakai 8766 — tidak bentrok) dan menjadi rumah
- * bagi loop agen. START_STICKY + BootReceiver membuatnya hidup
- * kembali sesudah reboot / sesudah sempat di-kill sistem.
- * Tanpa idle timeout — service ini dirancang selalu hidup.
+ * Rumah bagi loop agen + penjadwalan (fase 5). START_STICKY +
+ * BootReceiver membuatnya hidup kembali sesudah reboot / sesudah
+ * sempat di-kill sistem. Tanpa idle timeout — service ini dirancang
+ * selalu hidup.
+ *
+ * v1.0.1: BUKAN getgua client — aplikasi ini TIDAK PUNYA server HTTP
+ * kendali jarak jauh dan TIDAK PUNYA token HTTP. Aplikasi jalan
+ * sendiri di HP, diperintah lewat chat melalui otak (API key).
  */
 class AgentService : Service() {
 
     companion object {
-        const val PORT = 8767
         const val ACTION_STOP = "com.getgua.agent.STOP"
 
         private const val NOTIF_ID = 1
@@ -33,15 +35,12 @@ class AgentService : Service() {
             private set
     }
 
-    private var server: HttpServer? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
         AppLog.init(this)
         Automation.init(this)
-        TokenStore.init(this)
-        TokenStore.reload()
         Prefs.init(this)
         ActionLog.init(this)
         ChatStore.init(this)
@@ -61,25 +60,12 @@ class AgentService : Service() {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
         )
         acquireWakeLock()
-        if (server == null) {
-            try {
-                server = HttpServer(PORT, Router(applicationContext)).also { it.start() }
-                running = true
-                AppLog.log("service", "started, http on port $PORT")
-            } catch (e: Exception) {
-                AppLog.log("service", "http start failed: ${(e.message ?: "").take(100)}")
-                running = false
-            }
-        }
+        running = true
+        AppLog.log("service", "started (loop agen + jadwal, tanpa HTTP)")
         return START_STICKY
     }
 
     override fun onDestroy() {
-        try {
-            server?.stop()
-        } catch (_: Exception) {
-        }
-        server = null
         running = false
         releaseWakeLock()
         AppLog.log("service", "destroyed")
@@ -121,7 +107,7 @@ class AgentService : Service() {
         if (wakeLock?.isHeld == true) return
         try {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "getgua-agent:http").apply {
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "getgua-agent:loop").apply {
                 acquire()
             }
         } catch (_: Exception) {

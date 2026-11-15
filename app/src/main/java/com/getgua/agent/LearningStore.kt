@@ -33,39 +33,27 @@ object LearningStore {
     fun init(context: Context) {
         try {
             storeFile = File(context.filesDir, "learning.json")
-            if (storeFile?.exists() != true) save(seed())
+            if (storeFile?.exists() != true) save(empty())
         } catch (_: Exception) {
         }
     }
 
-    private fun seed(): All = All(
-        skills = listOf(
-            Skill("s1", "Airdrop", "Klaim harian, cek mint, tugas airdrop di HP", true),
-            Skill("s2", "Pengendali HP", "Ketuk, geser, ketik, screenshot, buka aplikasi", true),
-        ),
-        lessons = listOf(
-            Lesson(
-                "p1",
-                "Tombol Kirim Telegraph: ketuk (667,1036), bukan koordinat yang dilaporkan UI dump",
-                "Dari koreksi Pak · 13 Nov 2026",
-            ),
-            Lesson(
-                "p2",
-                "Kalau Bitget minta kode sandi, baca dulu dari Keep sebelum ketuk Konfirmasi",
-                "Dari koreksi Pak · 15 Nov 2026",
-            ),
-        ),
-        memories = listOf(
-            Memory("m1", "Pak: klaim harian dulu sebelum tugas lain", "Dari chat · 15 Nov 2026"),
-            Memory("m2", "Dompet utama: Bitget Saya64", "Dari chat · 11 Nov 2026"),
-        ),
+    /**
+     * v1.0.1: TIDAK ADA DATA BAWAAN. Install pertama = kosong total
+     * (tanpa skill, pelajaran, atau memori contoh). Semua isi datang
+     * dari Pak atau dari yang agen pelajari saat berjalan.
+     */
+    private fun empty(): All = All(
+        skills = emptyList(),
+        lessons = emptyList(),
+        memories = emptyList(),
     )
 
     @Synchronized
     fun load(): All {
-        val f = storeFile ?: return seed()
+        val f = storeFile ?: return empty()
         return try {
-            if (!f.exists()) return seed()
+            if (!f.exists()) return empty()
             val root = JSONObject(f.readText())
             val skills = ArrayList<Skill>()
             val sArr = root.optJSONArray("skills") ?: JSONArray()
@@ -87,7 +75,7 @@ object LearningStore {
             }
             All(skills, lessons, memories)
         } catch (_: Exception) {
-            seed()
+            empty()
         }
     }
 

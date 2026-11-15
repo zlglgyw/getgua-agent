@@ -31,7 +31,7 @@ object Automation {
         val uiChanged: Boolean? = null,
     )
 
-    /** Paket yang TIDAK BOLEH dimatikan lewat /stop_app. */
+    /** Paket yang TIDAK BOLEH dimatikan lewat stopApp. */
     private val PROTECTED_PACKAGES = setOf(
         "com.termux", // Termux: rumah phone_server + Hermes
         "com.tailscale.ipn", // Tailscale: satu-satunya jalan masuk jaringan
@@ -402,10 +402,6 @@ object Automation {
     }
 
     fun launch(pkg: String): ActionResult {
-        val allowed = TokenStore.allowedPackages()
-        if (allowed.isNotEmpty() && pkg !in allowed) {
-            return ActionResult(false, "blocked_not_allowed_package")
-        }
         val ok = RootShell.run(
             listOf("monkey", "-p", pkg, "-c", "android.intent.category.LAUNCHER", "1"),
             15,
@@ -424,10 +420,6 @@ object Automation {
     fun stopApp(pkg: String): ActionResult {
         if (pkg in PROTECTED_PACKAGES) {
             return ActionResult(false, "blocked_protected_package")
-        }
-        val allowed = TokenStore.allowedPackages()
-        if (allowed.isNotEmpty() && pkg !in allowed) {
-            return ActionResult(false, "blocked_not_allowed_package")
         }
         RootShell.run(listOf("am", "force-stop", pkg), 15)
         repeat(20) {
