@@ -1,0 +1,1029 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI aplikasi Agen getgua — sesuai mockup v11.
+     4 tab bawah: Chat | Sub obrolan | Status | Pengaturan,
+     ditambah layar dalam: Thread, Jadwal Klaim, Riwayat Aksi,
+     Laporan Harian, Skill & Memori. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- App bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/tvAppTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Agen getgua"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tvAppBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="v1.0.0"
+            android:textSize="12sp"
+            android:padding="4dp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#DDDDDD" />
+
+    <!-- ==================== LAYAR CHAT ==================== -->
+    <LinearLayout
+        android:id="@+id/screenChat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvAgentStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="Status agen: Siap"
+            android:textSize="13sp" />
+
+        <ScrollView
+            android:id="@+id/scrollMessages"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/messagesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+            <EditText
+                android:id="@+id/etChatInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Tulis perintah..."
+                android:inputType="text"
+                android:imeOptions="actionSend" />
+            <Button
+                android:id="@+id/btnSend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kirim" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ==================== LAYAR SUB OBROLAN (daftar) ==================== -->
+    <LinearLayout
+        android:id="@+id/screenSubList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+            <EditText
+                android:id="@+id/etNewThread"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Nama sub obrolan baru..." />
+            <Button
+                android:id="@+id/btnNewThread"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Buat" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvPinWarn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:gravity="center"
+            android:textColor="#CC0000"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <ScrollView
+            android:id="@+id/scrollSubList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/subListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </ScrollView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:gravity="center"
+            android:text="Ketuk ikon pin untuk menyematkan chat di atas daftar (maksimal 3)."
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- ==================== LAYAR THREAD (satu sub obrolan) ==================== -->
+    <LinearLayout
+        android:id="@+id/screenThread"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/btnThreadBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="‹" />
+            <TextView
+                android:id="@+id/tvThreadTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvThreadStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="Status agen: Siap"
+            android:textSize="13sp" />
+
+        <ScrollView
+            android:id="@+id/scrollThreadMessages"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/threadMessagesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+            <EditText
+                android:id="@+id/etThreadInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Tulis perintah..."
+                android:inputType="text"
+                android:imeOptions="actionSend" />
+            <Button
+                android:id="@+id/btnThreadSend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kirim" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ==================== LAYAR STATUS ==================== -->
+    <ScrollView
+        android:id="@+id/screenStatus"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <Button
+                android:id="@+id/btnStopAgent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#DC2626"
+                android:text="HENTIKAN AGEN"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/tvStoppedBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:textColor="#CC0000"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="CUSTOM API KEY"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Mode edit (belum ada key / sedang diubah) -->
+            <LinearLayout
+                android:id="@+id/apiKeyEditGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Alamat API + key Pak sendiri. Bisa 9Router, atau langsung ke provider OpenAI-compatible mana pun — 9Router tidak wajib. Disimpan di HP saja."
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="Alamat API (endpoint)"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <EditText
+                    android:id="@+id/etApiUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="https://api.contoh.com/v1"
+                    android:inputType="textUri" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/btnPreset9Router"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="9Router" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="API Key"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <EditText
+                    android:id="@+id/etApiKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="sk-..."
+                    android:inputType="textPassword" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/btnSaveApiKey"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Simpan" />
+                    <Button
+                        android:id="@+id/btnCancelEditKey"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Batal"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Mode tersimpan -->
+            <LinearLayout
+                android:id="@+id/apiKeySavedGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="Alamat API"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tvApiUrlSaved"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="API Key"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tvApiKeyMasked"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/btnEditApiKey"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ubah" />
+                    <Button
+                        android:id="@+id/btnDeleteApiKey"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hapus" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnTestBrain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tes Otak (/v1/models)" />
+            <TextView
+                android:id="@+id/tvTestBrainResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:padding="4dp" />
+
+            <Button
+                android:id="@+id/btnOpenJadwal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Jadwal Klaim ›" />
+            <Button
+                android:id="@+id/btnOpenRiwayat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Riwayat Aksi ›" />
+            <Button
+                android:id="@+id/btnOpenLaporan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Laporan Harian ›" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="STATUS PERANGKAT"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvStService"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Service: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStRoot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Root: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStA11y"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aksesibilitas: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStBattery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Baterai: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStToken"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Token HTTP: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStBrain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Otak: …"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/tvStUsage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pemakaian: …"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="TOKEN HTTP (PORT 8767)"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Token yang sama dengan getgua client (dibaca dari file Termux). Bila tidak terbaca, masukkan manual di bawah."
+                android:textSize="13sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/etHttpToken"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Token manual (min 20 karakter)"
+                    android:inputType="textPassword" />
+                <Button
+                    android:id="@+id/btnSaveHttpToken"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Simpan" />
+            </LinearLayout>
+            <Button
+                android:id="@+id/btnClearHttpToken"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hapus token manual" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnStartService"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mulai Service" />
+                <Button
+                    android:id="@+id/btnStopService"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hentikan Service" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnA11y"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Aksesibilitas" />
+                <Button
+                    android:id="@+id/btnBattery"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Baterai" />
+                <Button
+                    android:id="@+id/btnRefreshStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Segarkan" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ==================== LAYAR JADWAL KLAIM ==================== -->
+    <LinearLayout
+        android:id="@+id/screenJadwal"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/btnJadwalBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="‹" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jadwal Klaim"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="Jadwal tersimpan di sini. Eksekusi otomatis aktif di fase 5 — untuk sekarang jadwal hanya pengingat."
+            android:textSize="13sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+            <EditText
+                android:id="@+id/etNewSched"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Nama tugas, mis. Klaim Octos" />
+            <Spinner
+                android:id="@+id/spSchedInterval"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/btnAddSched"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tambah" />
+        </LinearLayout>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/jadwalContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- ==================== LAYAR RIWAYAT AKSI ==================== -->
+    <LinearLayout
+        android:id="@+id/screenRiwayat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/btnRiwayatBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="‹" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Riwayat Aksi"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="Evaluasi diri: aktif di fase 5. Untuk sekarang, riwayat di bawah menunjukkan tiap aksi agen — termasuk yang berhasil setelah dikoreksi sendiri."
+            android:textSize="13sp" />
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/riwayatContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </ScrollView>
+        <Button
+            android:id="@+id/btnClearLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bersihkan riwayat" />
+    </LinearLayout>
+
+    <!-- ==================== LAYAR LAPORAN HARIAN ==================== -->
+    <LinearLayout
+        android:id="@+id/screenLaporan"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/btnLaporanBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="‹" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Laporan Harian"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+                <TextView
+                    android:id="@+id/tvLaporanStats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp" />
+                <TextView
+                    android:id="@+id/tvLaporanAttention"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:textSize="14sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="12dp"
+                    android:text="JAM LAPORAN"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <Spinner
+                    android:id="@+id/spReportTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="Laporan otomatis tiap pagi + saran agen aktif di fase 5. Statistik di atas dihitung dari Riwayat Aksi hari ini."
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- ==================== LAYAR PENGATURAN ==================== -->
+    <ScrollView
+        android:id="@+id/screenSettings"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="OTAK"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <RadioGroup
+                android:id="@+id/rgModel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <RadioButton
+                    android:id="@+id/rbGemini"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Gemini flash-lite (gratis)" />
+            </RadioGroup>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/etCustomModel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Ketik ID model lain (lihat daftar lewat Tes Otak di Status)" />
+                <Button
+                    android:id="@+id/btnSaveModel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pakai" />
+            </LinearLayout>
+            <Button
+                android:id="@+id/btnApiKeyRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Custom API Key › (kelola di Status)" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="AGEN"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <Button
+                android:id="@+id/btnSkillsRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Skill &amp; Memori ›" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="SIAPA YANG BOLEH MEMERINTAH"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <EditText
+                android:id="@+id/etAllowlist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Nomor WA / chat_id Telegram (pisah koma)" />
+            <Button
+                android:id="@+id/btnSaveAllowlist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Simpan allowlist" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="TELEGRAM (fase 2)"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <EditText
+                android:id="@+id/etTgToken"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Token bot dari @BotFather"
+                android:inputType="textPassword" />
+            <Button
+                android:id="@+id/btnSaveTgToken"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Simpan token Telegram" />
+            <TextView
+                android:id="@+id/tvTgTokenStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Belum diisi"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="ALLOWLIST TELEGRAM (chat_id yang diizinkan)"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Hanya chat_id di daftar ini yang dilayani bot. Pesan dari pengirim lain diabaikan diam-diam. (Bot Telegram aktif di fase 2.)"
+                android:textSize="13sp" />
+            <LinearLayout
+                android:id="@+id/tgAllowlistContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/etNewTgAllowlist"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="chat_id, mis. 123456789"
+                    android:inputType="numberSigned" />
+                <Button
+                    android:id="@+id/btnAddTgAllowlist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tambah" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:text="WHATSAPP (fase 3)"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="WhatsApp dihubungkan lewat scan QR di fase 3. Untuk sekarang, perintah hanya lewat chat di aplikasi ini."
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- ==================== LAYAR SKILL & MEMORI ==================== -->
+    <LinearLayout
+        android:id="@+id/screenSkills"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+            <Button
+                android:id="@+id/btnSkillsBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="‹" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Skill &amp; Memori"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SKILL"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:id="@+id/skillsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/etNewSkill"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Nama skill baru..." />
+                    <Button
+                        android:id="@+id/btnAddSkill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tambah" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="12dp"
+                    android:text="PELAJARAN (DARI KOREKSI)"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:id="@+id/lessonsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/etNewLesson"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Tambah pelajaran..." />
+                    <Button
+                        android:id="@+id/btnAddLesson"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tambah" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="12dp"
+                    android:text="MEMORI"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:id="@+id/memoriesContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/etNewMemory"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Tambah memori..." />
+                    <Button
+                        android:id="@+id/btnAddMemory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tambah" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:gravity="center"
+                    android:text="Skill &amp; memori tersimpan lokal di HP. Pelajaran dipakai agen agar tidak mengulang kesalahan yang sama."
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- ==================== NAVIGASI BAWAH ==================== -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#DDDDDD" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/tabChat"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Chat" />
+        <Button
+            android:id="@+id/tabSubList"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Sub obrolan" />
+        <Button
+            android:id="@+id/tabStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Status" />
+        <Button
+            android:id="@+id/tabSettings"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Pengaturan" />
+    </LinearLayout>
+</LinearLayout>

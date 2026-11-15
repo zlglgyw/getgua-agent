@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Agen getgua</string>
+    <string name="accessibility_service_description">Layanan Agen getgua: memungkinkan agen pribadi milik pemilik HP mengetuk tombol dan membaca layar secara akurat (klik elemen langsung, bukan tebak koordinat). Hanya aktif bila pemilik mengizinkan.</string>
+    <string name="notif_channel_name">Agen getgua</string>
+    <string name="notif_channel_desc">Agen getgua sedang berjalan (server HTTP port 8767 + loop agen).</string>
+    <string name="notif_title">Agen getgua aktif</string>
+    <string name="notif_text">Server kendali HP berjalan di port 8767</string>
+</resources>
